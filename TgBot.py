@@ -388,7 +388,6 @@ async def info(update: Update, context: CallbackContext):
 
 
 
-
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sent_messages = load_sent_messages()
     muted_users = load_muted_users_from_file()
@@ -531,12 +530,23 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Введіть /message, щоб надсилати повідомлення адміністраторам бота.")
     else:
         if update.effective_user.id != context.bot.id:
+            print(1)
             if update.message.reply_to_message:
+                print(2)
                 if update.message.reply_to_message.from_user.id == context.bot.id:
+                    print(3)
                     original_message_id = str(update.message.reply_to_message.message_id)
                     if original_message_id in sent_messages:
+                        print(4)
                         original_user_id = sent_messages[original_message_id]
                         reply_text = update.message.text if update.message.text else ""
+                        print(121)
+                        for user in config['users']:
+                            print(config)
+                            print(user['id'])
+                            if user['id'] == original_user_id:
+                                user_name = user['first_name'],"Немає імені"
+
                         if update.message.photo:
                             photo_file_id = update.message.photo[-1].file_id
                             caption = update.message.caption if update.message.caption else ''
@@ -568,7 +578,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         else:
                             caption = update.message.caption if update.message.caption else ''
                             await context.bot.send_message(chat_id=original_user_id, text=reply_text)
-                        await update.message.reply_text(f"Користувачу {update.effective_user.first_name } було надіслано повідомлення")
+                        await update.message.reply_text(f"Користувачу { user_name } було надіслано повідомлення")
                         sent_messages[update.message.message_id] = update.message.from_user.id
                         save_sent_messages(sent_messages)
 
