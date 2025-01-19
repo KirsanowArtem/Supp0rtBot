@@ -25,7 +25,6 @@ nest_asyncio.apply()
 
 from telegram.ext import Application
 
-
 global muted_users
 
 
