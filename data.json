@@ -1,0 +1,61 @@
+{
+    "users": [
+        {
+            "id": "1840233118",
+            "first_name": "Artem",
+            "username": "ArtemKirss",
+            "join_date": "17:01; 09/01/2025",
+            "rating": 5,
+            "mute": false,
+            "mute_end": "None",
+            "reason": null
+        },
+        {
+            "id": "5708855619",
+            "first_name": "Dmitry",
+            "username": "Kirsanov_Dmitrij",
+            "join_date": "11:18; 13/01/2025",
+            "rating": 0,
+            "mute": true,
+            "mute_end": "19:54; 17/01/2025",
+            "reason": "По рішенню администратора"
+        },
+        {
+            "id": "1013802830",
+            "first_name": "Глеб",
+            "username": "RavaNay",
+            "join_date": "19:50; 18/01/2025",
+            "rating": 0,
+            "mute": false,
+            "mute_end": "None",
+            "reason": null
+        }
+    ],
+    "muted_users": {
+        "Kirsanov_Dmitrij": true
+    },
+    "admins": [],
+    "programmers": [
+        "ArtemKirss"
+    ],
+    "bot_token": "-",
+    "owner_id": "1840233118",
+    "chat_id": "-1002340443739",
+    "total_score": 3.0,
+    "num_of_ratings": 1,
+    "sent_messages": {
+        "3055": 1840233118,
+        "3057": 1840233118,
+        "3060": 1840233118,
+        "5713": 1840233118,
+        "3061": 1840233118,
+        "5715": 1840233118,
+        "3062": 1840233118,
+        "5717": 1840233118,
+        "3063": 1840233118,
+        "3257": 1013802830,
+        "5759": 1013802830,
+        "3451": 1840233118,
+        "432": 1840233118
+    }
+}
