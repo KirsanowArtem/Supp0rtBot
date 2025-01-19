@@ -5,3 +5,4 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python3 TgBot.py"
     pythonVersion: "3.12.2"
+

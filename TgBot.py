@@ -530,22 +530,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Введіть /message, щоб надсилати повідомлення адміністраторам бота.")
     else:
         if update.effective_user.id != context.bot.id:
-            print(1)
             if update.message.reply_to_message:
-                print(2)
                 if update.message.reply_to_message.from_user.id == context.bot.id:
-                    print(3)
                     original_message_id = str(update.message.reply_to_message.message_id)
                     if original_message_id in sent_messages:
-                        print(4)
                         original_user_id = sent_messages[original_message_id]
                         reply_text = update.message.text if update.message.text else ""
-                        print(121)
                         for user in config['users']:
-                            print(config)
-                            print(user['id'])
-                            if user['id'] == original_user_id:
-                                user_name = user['first_name'],"Немає імені"
+                            if str(user['id']) == str(original_user_id):
+                                user_name = user['first_name']
+                                break
 
                         if update.message.photo:
                             photo_file_id = update.message.photo[-1].file_id
