@@ -30,7 +30,7 @@ global muted_users
 
 
 scheduler = BackgroundScheduler(timezone="Europe/Kiev")
-BOTTOCEN = "8039978006:AAEpV8GeHHyxcl-wx-nXyTIuisLKBTsJRGs"
+
 DATA_FILE = "data.json"
 EXCEL_FILE = "user_data_export.xlsx"
 
@@ -129,6 +129,13 @@ def load_chat_id_from_file(file_path=DATA_FILE):
     chat_id = data.get("chat_id")
     return chat_id
 
+def load_bottocen_from_file(file_path=DATA_FILE):
+    with open(file_path, "r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    bot_token = data.get("bot_token")
+    return bot_token
+
 def update_data_json(data):
     with open(DATA_FILE, "w") as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
@@ -138,7 +145,7 @@ users_info = load_users_info()
 muted_users = load_muted_users_from_file()
 
 CREATOR_CHAT_ID = load_chat_id_from_file()
-
+BOTTOCEN = load_bottocen_from_file()
 
 
 
@@ -629,7 +636,7 @@ async def mute(update: Update, context: CallbackContext):
             return
 
         if user["mute"] == True:
-            await update.message.reply_text(f"Користувач {user["first_name"]} вже замучений")
+            await update.message.reply_text(f"Користувач {user['first_name']} вже замучений")
             return
 
         if mute_time == 0:
@@ -727,7 +734,7 @@ async def programier(update: Update, context: CallbackContext):
             else:
                 await update.message.reply_text(f"Користувач {new_programmer} вже є в списку программистів.")
         else:
-            await update.message.reply_text("Використовуйте: /p @username")
+            await update.message.reply_text("Використовуйте: /programier @username")
     else:
         await update.message.reply_text("Ця команда доступна лише адміністраторам.")
 
@@ -745,7 +752,7 @@ async def deleteprogramier(update: Update, context: CallbackContext):
             else:
                 await update.message.reply_text(f"Користувач {removed_programmer} не є программистом.")
         else:
-            await update.message.reply_text("Використовуйте: /unp @username")
+            await update.message.reply_text("Використовуйте: /deleteprogramier @username")
     else:
         await update.message.reply_text("Ця команда доступна лише адміністраторам.")
 
