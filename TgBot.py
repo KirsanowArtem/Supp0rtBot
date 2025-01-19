@@ -1020,7 +1020,6 @@ async def main():
     application.add_handler(CommandHandler("get_alllist", get_alllist))
     application.add_handler(CommandHandler("set_alllist", set_alllist))
 
-
     application.add_handler(CallbackQueryHandler(button_callback))
     application.add_handler(CallbackQueryHandler(button))
     application.add_handler(MessageHandler(filters.ALL, handle_message))
@@ -1028,7 +1027,6 @@ async def main():
     await set_default_commands(application)
     await set_creator_commands(application)
     await set_save_commands(application)
-
 
     application.run_polling()
 
