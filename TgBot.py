@@ -11,7 +11,7 @@ import pandas as pd
 import telegram.error
 
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, ChatPermissions, \
-    BotCommand
+    BotCommand, BotCommandScopeDefault, BotCommandScopeChat
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, CallbackContext, ContextTypes
 from datetime import datetime, timedelta
 from flask import Flask
@@ -23,8 +23,6 @@ from openpyxl.styles import Alignment, Border, Side
 from apscheduler.schedulers.background import BackgroundScheduler
 nest_asyncio.apply()
 
-
-from telegram import BotCommand, BotCommandScopeDefault, BotCommandScopeChat
 from telegram.ext import Application
 
 
