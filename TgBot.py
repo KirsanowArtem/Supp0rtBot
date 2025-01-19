@@ -28,7 +28,6 @@ from telegram.ext import Application
 global muted_users
 
 
-
 scheduler = BackgroundScheduler(timezone="Europe/Kiev")
 
 DATA_FILE = "data.json"
