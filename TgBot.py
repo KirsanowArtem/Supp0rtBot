@@ -18,10 +18,10 @@ from flask import Flask
 
 from aiocron import crontab
 from openpyxl import load_workbook
-from openpyxl.styles import Alignment, Border, Side
+from openpyxl.styles import Alignment, Border, Side, PatternFill
 
 from apscheduler.schedulers.background import BackgroundScheduler
-nest_asyncio.apply()
+
 
 from telegram.ext import Application
 
@@ -928,32 +928,40 @@ def is_admin(username):
 
 async def get_alllist(update: Update, context: CallbackContext) -> None:
     try:
+        # Чтение JSON-данных
         with open(DATA_FILE, "r", encoding="utf-8") as file:
             data = json.load(file)
 
+        # Создание DataFrame для всех пользователей
         all_users_df = pd.DataFrame(data["users"])
 
+        # Разделение пользователей на замученных и нет
         users_df = all_users_df[all_users_df["mute"] == False]
-
         muted_df = all_users_df[all_users_df["mute"] == True]
 
+        # Форматирование времени окончания мута
         muted_df.loc[:, "mute_end"] = muted_df["mute_end"].apply(
             lambda x: datetime.strptime(x.replace(";", " "), "%H:%M %d/%m/%Y").strftime("%H:%M; %d/%m/%Y") if isinstance(x, str) else ""
         )
 
+        # Создание дополнительных DataFrame из JSON-данных
         admins_df = pd.DataFrame(data.get("admins", []), columns=["Admins"])
         programmers_df = pd.DataFrame(data.get("programmers", []), columns=["Programmers"])
         general_info_df = pd.DataFrame(
-            [{"bot_token": data.get("bot_token"),
-              "owner_id": data.get("owner_id"),
-              "chat_id": data.get("chat_id"),
-              "total_score": data.get("total_score"),
-              "num_of_ratings": data.get("num_of_ratings")}]
+            [{
+                "bot_token": data.get("bot_token"),
+                "owner_id": data.get("owner_id"),
+                "chat_id": data.get("chat_id"),
+                "total_score": data.get("total_score"),
+                "num_of_ratings": data.get("num_of_ratings")
+            }]
         )
         sent_messages_df = pd.DataFrame(data.get("sent_messages", {}).items(), columns=["MessageID", "UserID"])
         muted_users_df = pd.DataFrame(data.get("muted_users", {}).items(), columns=["UserID", "Details"])
 
-        with pd.ExcelWriter("all_users.xlsx") as writer:
+        # Сохранение данных в Excel-файл
+        excel_file = "all_users.xlsx"
+        with pd.ExcelWriter(excel_file) as writer:
             users_df.to_excel(writer, index=False, sheet_name="Users")
             muted_df.to_excel(writer, index=False, sheet_name="Muted")
             all_users_df.to_excel(writer, index=False, sheet_name="AllUser")
@@ -963,7 +971,30 @@ async def get_alllist(update: Update, context: CallbackContext) -> None:
             sent_messages_df.to_excel(writer, index=False, sheet_name="SentMessages")
             muted_users_df.to_excel(writer, index=False, sheet_name="MutedUsers")
 
-        await update.message.reply_document(document=open("all_users.xlsx", "rb"))
+        # Открытие файла для редактирования и окрашивания строк
+        workbook = load_workbook(excel_file)
+        sheet = workbook["AllUser"]
+
+        # Определение стилей для закрашивания
+        yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")  # Жёлтый для не в муте
+        red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")  # Красный для в муте
+
+        # Перебор строк и закрашивание диапазона A:H
+        for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=1, max_col=8):
+            username_cell = row[2]  # Колонка C (индекс 2)
+            mute_status = next((user['mute'] for user in data["users"] if user["username"] == username_cell.value), False)
+
+            fill_color = red_fill if mute_status else yellow_fill
+
+            for cell in row[:8]:  # Закрашивание диапазона A:H
+                cell.fill = fill_color
+
+        # Сохранение обновлённого файла
+        workbook.save(excel_file)
+
+        # Отправка пользователю
+        await update.message.reply_document(document=open(excel_file, "rb"))
+
     except Exception as e:
         await update.message.reply_text(f"Error: {e}")
 
@@ -998,6 +1029,7 @@ async def set_save_commands(application):
     commands = [
         BotCommand("get_alllist", "Отримати Exel файл з користувачами"),
         BotCommand("set_alllist", "Записати Exel файл з користувачами"),
+        BotCommand("help", "Показати доступні команди"),
     ]
     await application.bot.set_my_commands(commands, scope=BotCommandScopeChat(chat_id=-1002358066044))
 
