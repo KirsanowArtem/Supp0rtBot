@@ -185,7 +185,7 @@ async def start(update: Update, context):
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
     await update.message.reply_text(
-        "Привіт! Я ваш бот підтримки. Введіть команду /rate для оінки бота, /message для написания адміністраторам бота або /help для отримання інформації про команди.",
+        "Привіт!0 Я ваш бот підтримки. Введіть команду /rate для оінки бота, /message для написания адміністраторам бота або /help для отримання інформації про команди.",
         reply_markup=reply_markup
     )
 
@@ -935,68 +935,50 @@ async def get_alllist(update: Update, context: CallbackContext) -> None:
         # Создание DataFrame для всех пользователей
         all_users_df = pd.DataFrame(data["users"])
 
-        # Разделение пользователей на замученных и нет
+        # Разделение пользователей на замученных и незамученных
         users_df = all_users_df[all_users_df["mute"] == False]
         muted_df = all_users_df[all_users_df["mute"] == True]
 
         # Форматирование времени окончания мута
-        muted_df.loc[:, "mute_end"] = muted_df["mute_end"].apply(
-            lambda x: datetime.strptime(x.replace(";", " "), "%H:%M %d/%m/%Y").strftime("%H:%M; %d/%m/%Y") if isinstance(x, str) else ""
+        muted_df["mute_end"] = muted_df["mute_end"].apply(
+            lambda x: datetime.strptime(x.replace(";", " "), "%H:%M %d/%m/%Y").strftime("%H:%M; %d/%m/%Y")
+            if isinstance(x, str) else ""
         )
-
-        # Создание дополнительных DataFrame из JSON-данных
-        admins_df = pd.DataFrame(data.get("admins", []), columns=["Admins"])
-        programmers_df = pd.DataFrame(data.get("programmers", []), columns=["Programmers"])
-        general_info_df = pd.DataFrame(
-            [{
-                "bot_token": data.get("bot_token"),
-                "owner_id": data.get("owner_id"),
-                "chat_id": data.get("chat_id"),
-                "total_score": data.get("total_score"),
-                "num_of_ratings": data.get("num_of_ratings")
-            }]
-        )
-        sent_messages_df = pd.DataFrame(data.get("sent_messages", {}).items(), columns=["MessageID", "UserID"])
-        muted_users_df = pd.DataFrame(data.get("muted_users", {}).items(), columns=["UserID", "Details"])
 
         # Сохранение данных в Excel-файл
         excel_file = "all_users.xlsx"
-        with pd.ExcelWriter(excel_file) as writer:
+        with pd.ExcelWriter(excel_file, engine="openpyxl") as writer:
             users_df.to_excel(writer, index=False, sheet_name="Users")
             muted_df.to_excel(writer, index=False, sheet_name="Muted")
             all_users_df.to_excel(writer, index=False, sheet_name="AllUser")
-            admins_df.to_excel(writer, index=False, sheet_name="Admins")
-            programmers_df.to_excel(writer, index=False, sheet_name="Programmers")
-            general_info_df.to_excel(writer, index=False, sheet_name="GeneralInfo")
-            sent_messages_df.to_excel(writer, index=False, sheet_name="SentMessages")
-            muted_users_df.to_excel(writer, index=False, sheet_name="MutedUsers")
 
-        # Открытие файла для редактирования и окрашивания строк
+        # Открытие файла для окрашивания строк
         workbook = load_workbook(excel_file)
         sheet = workbook["AllUser"]
 
-        # Определение стилей для закрашивания
-        yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")  # Жёлтый для не в муте
-        red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")  # Красный для в муте
+        # Определение стилей для окрашивания
+        yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")  # Жёлтый
+        red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")  # Красный
 
-        # Перебор строк и закрашивание диапазона A:H
-        for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=1, max_col=8):
-            username_cell = row[2]  # Колонка C (индекс 2)
-            mute_status = next((user['mute'] for user in data["users"] if user["username"] == username_cell.value), False)
+        # Получаем индекс колонки "mute"
+        mute_col_index = list(all_users_df.columns).index("mute") + 1  # +1, т.к. индексация с 1 в Excel
 
-            fill_color = red_fill if mute_status else yellow_fill
+        # Закрашивание строк в зависимости от статуса "mute"
+        for row in range(2, sheet.max_row + 1):
+            mute_value = sheet.cell(row=row, column=mute_col_index).value
+            fill_color = red_fill if mute_value else yellow_fill
 
-            for cell in row[:8]:  # Закрашивание диапазона A:H
-                cell.fill = fill_color
+            for col in range(1, 9):  # Закрашивание диапазона A:H (1:8)
+                sheet.cell(row=row, column=col).fill = fill_color
 
-        # Сохранение обновлённого файла
+        # Сохранение файла
         workbook.save(excel_file)
 
         # Отправка пользователю
         await update.message.reply_document(document=open(excel_file, "rb"))
 
     except Exception as e:
-        await update.message.reply_text(f"Error: {e}")
+        await update.message.reply_text(f"Ошибка: {e}")
 
 async def set_alllist(update: Update, context: CallbackContext) -> None:
     await update.message.reply_text("Будь ласка пришліть Excel file з данними.")
