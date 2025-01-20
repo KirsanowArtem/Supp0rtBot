@@ -25,6 +25,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from telegram.ext import Application
 
+nest_asyncio.apply()
+
 global muted_users
 
 
