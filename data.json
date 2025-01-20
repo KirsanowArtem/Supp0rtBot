@@ -36,7 +36,7 @@
     "programmers": [
         "ArtemKirss"
     ],
-    "bot_token": "7651661492:AAH0XOs1UNhVf71bAfUrp9YesMblqpz36Vk",
+    "bot_token": "7651661492:AAFfnRettxAhlOFbj6s_eQ-GM2yBfnQV1Ew",
     "owner_id": "1840233118",
     "chat_id": "-1002340443739",
     "total_score": 5.0,
@@ -105,6 +105,8 @@
         "713": 5708855619,
         "3534": 5708855619,
         "714": 5708855619,
-        "3535": 1840233118
+        "3535": 1840233118,
+        "3547": 1840233118,
+        "6062": 1840233118
     }
 }
