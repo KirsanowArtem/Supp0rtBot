@@ -225,15 +225,18 @@ async def rate(update: Update, context):
 async def button_callback(update: Update, context):
     query = update.callback_query
     user_id = query.from_user.id
-    rating = float(query.data)
+    new_rating = float(query.data)
 
     with open(DATA_FILE, "r", encoding="utf-8") as json_file:
         data = json.load(json_file)
 
     user_found = False
+    previous_rating = 0
+
     for user in data.get("users", []):
         if user.get('id') == str(user_id):
-            user['rating'] = rating
+            previous_rating = user.get('rating', 0)
+            user['rating'] = new_rating
             user_found = True
             break
 
@@ -243,7 +246,7 @@ async def button_callback(update: Update, context):
             'first_name': query.from_user.first_name,
             'username': query.from_user.username,
             'join_date': datetime.now().strftime("%H:%M; %d/%m/%Y"),
-            'rating': rating,
+            'rating': new_rating,
             'mute': False,
             'mute_end': None,
             'reason': None
@@ -253,8 +256,11 @@ async def button_callback(update: Update, context):
     total_score = data.get("total_score", 0)
     num_of_ratings = data.get("num_of_ratings", 0)
 
-    total_score += rating
-    num_of_ratings += 1
+    if previous_rating == 0:
+        num_of_ratings += 1
+        total_score += new_rating
+    else:
+        total_score = total_score - previous_rating + new_rating
 
     data["total_score"] = total_score
     data["num_of_ratings"] = num_of_ratings
@@ -265,7 +271,9 @@ async def button_callback(update: Update, context):
 
     average_rating = total_score / num_of_ratings if num_of_ratings > 0 else 0
 
-    await query.edit_message_text(f"Загальна оцінка: {round(average_rating, 1)}⭐️\nВаша оцінка: {rating}⭐️\nДякуємо за ваш відгук!")
+    await query.edit_message_text(
+        f"Дякуємо за ваш відгук! Ваша оцінка: {new_rating}⭐️\nЗагальна оцінка: {round(average_rating, 1)}⭐️"
+    )
 
 async def button(update: Update, context):
     global total_score, num_of_ratings
