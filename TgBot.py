@@ -591,7 +591,6 @@ async def mute(update: Update, context: CallbackContext):
     reason = "По рішенню адміністратора"
     username = None
 
-    # Определяем username
     if len(context.args) > 0:
         if context.args[0].isdigit():
             mute_time = int(context.args[0])
@@ -907,6 +906,11 @@ def is_admin(username):
 
 
 async def get_alllist(update: Update, context: CallbackContext) -> None:
+    user = update.message.from_user.username
+
+    if not is_programmer(user) and not is_admin(user):
+        await update.message.reply_text("Ця команда доступна тільки адміністраторам.")
+        return
     try:
         with open(DATA_FILE, "r", encoding="utf-8") as file:
             data = json.load(file)
@@ -968,6 +972,11 @@ async def get_alllist(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text(f"Error: {e}")
 
 async def set_alllist(update: Update, context: CallbackContext) -> None:
+    user = update.message.from_user.username
+
+    if not is_programmer(user) and not is_admin(user):
+        await update.message.reply_text("Ця команда доступна тільки адміністраторам.")
+        return
     await update.message.reply_text("Будь ласка пришліть Excel file з данними.")
     context.user_data["awaiting_file"] = True
 
