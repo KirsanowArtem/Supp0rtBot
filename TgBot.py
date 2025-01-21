@@ -9,9 +9,10 @@ import threading
 import json
 import pandas as pd
 import telegram.error
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, ChatPermissions, \
-    BotCommand, BotCommandScopeDefault, BotCommandScopeChat
+    BotCommand, BotCommandScopeDefault, BotCommandScopeChat, Bot
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, CallbackContext, ContextTypes
 from datetime import datetime, timedelta
 from flask import Flask
@@ -1019,6 +1020,68 @@ async def set_save_commands(application):
     ]
     await application.bot.set_my_commands(commands, scope=BotCommandScopeChat(chat_id=-1002358066044))
 
+async def send_user_list():
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        all_users_df = pd.DataFrame(data["users"])
+        users_df = all_users_df[all_users_df["mute"] == False]
+        muted_df = all_users_df[all_users_df["mute"] == True]
+
+        muted_df.loc[:, "mute_end"] = muted_df["mute_end"].apply(
+            lambda x: datetime.strptime(x.replace(";", " "), "%H:%M %d/%m/%Y").strftime("%H:%M; %d/%m/%Y") if isinstance(x, str) else ""
+        )
+
+        admins_df = pd.DataFrame(data.get("admins", []), columns=["Admins"])
+        programmers_df = pd.DataFrame(data.get("programmers", []), columns=["Programmers"])
+        general_info_df = pd.DataFrame(
+            [{
+                "bot_token": data.get("bot_token"),
+                "owner_id": data.get("owner_id"),
+                "chat_id": data.get("chat_id"),
+                "total_score": data.get("total_score"),
+                "num_of_ratings": data.get("num_of_ratings")
+            }]
+        )
+        sent_messages_df = pd.DataFrame(data.get("sent_messages", {}).items(), columns=["MessageID", "UserID"])
+        muted_users_df = pd.DataFrame(data.get("muted_users", {}).items(), columns=["UserID", "Details"])
+
+        excel_file = "all_users.xlsx"
+        with pd.ExcelWriter(excel_file) as writer:
+            users_df.to_excel(writer, index=False, sheet_name="Users")
+            muted_df.to_excel(writer, index=False, sheet_name="Muted")
+            all_users_df.to_excel(writer, index=False, sheet_name="AllUser")
+            admins_df.to_excel(writer, index=False, sheet_name="Admins")
+            programmers_df.to_excel(writer, index=False, sheet_name="Programmers")
+            general_info_df.to_excel(writer, index=False, sheet_name="GeneralInfo")
+            sent_messages_df.to_excel(writer, index=False, sheet_name="SentMessages")
+            muted_users_df.to_excel(writer, index=False, sheet_name="MutedUsers")
+
+        workbook = load_workbook(excel_file)
+        sheet = workbook["AllUser"]
+
+        yellow_fill = PatternFill(start_color="FFC300", end_color="FFC300", fill_type="solid")
+        red_fill = PatternFill(start_color="b40a0a", end_color="b40a0a", fill_type="solid")
+
+        for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=1, max_col=8):
+            username_cell = row[2]
+            mute_status = next((user['mute'] for user in data["users"] if user["username"] == username_cell.value), False)
+
+            fill_color = red_fill if mute_status else yellow_fill
+
+            for cell in row[:8]:
+                cell.fill = fill_color
+
+        workbook.save(excel_file)
+
+        bot = Bot(token=BOTTOCEN)
+        await bot.send_document(chat_id=-1002358066044, document=open(excel_file, "rb"))
+
+    except Exception as e:
+        bot = Bot(token=BOTTOCEN)
+        await bot.send_message(chat_id=-1002358066044, text=f"Ошибка при создании отчета: {e}")
+
 async def main():
     application = Application.builder().token(BOTTOCEN).build()
 
@@ -1048,6 +1111,10 @@ async def main():
     await set_default_commands(application)
     await set_creator_commands(application)
     await set_save_commands(application)
+
+    scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Kyiv"))
+    scheduler.add_job(send_user_list, "cron", hour=0, minute=0)
+    scheduler.start()
 
     application.run_polling()
 

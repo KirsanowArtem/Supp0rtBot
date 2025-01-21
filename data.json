@@ -15,7 +15,7 @@
             "first_name": "Dmitry",
             "username": "Kirsanov_Dmitrij",
             "join_date": "11:18; 13/01/2025",
-            "rating": 0,
+            "rating": 5,
             "mute": false,
             "mute_end": "None",
             "reason": null
@@ -25,7 +25,7 @@
             "first_name": "Глеб",
             "username": "RavaNay",
             "join_date": "19:50; 18/01/2025",
-            "rating": 0,
+            "rating": 5,
             "mute": false,
             "mute_end": "None",
             "reason": null
@@ -39,7 +39,7 @@
     "bot_token": "7651661492:AAFoSaap2cqR42EJTGWcAet3AHjFxnZzGQk",
     "owner_id": "1840233118",
     "chat_id": "-1002340443739",
-    "total_score": 5.0,
+    "total_score": 15.0,
     "num_of_ratings": 3,
     "sent_messages": {
         "3468": 1840233118,
