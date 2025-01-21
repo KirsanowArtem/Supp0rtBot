@@ -187,7 +187,7 @@ async def start(update: Update, context):
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
     await update.message.reply_text(
-        "Привіт! Я ваш бот підтримки. Введіть команду /rate для оінки бота, /message для написания адміністраторам бота або /help для отримання інформації про команди.",
+        "Привіт!5 Я ваш бот підтримки. Введіть команду /rate для оінки бота, /message для написания адміністраторам бота або /help для отримання інформації про команди.",
         reply_markup=reply_markup
     )
 
@@ -970,8 +970,8 @@ async def get_alllist(update: Update, context: CallbackContext) -> None:
         workbook = load_workbook(excel_file)
         sheet = workbook["AllUser"]
 
-        yellow_fill = PatternFill(start_color="#f2a705", end_color="#f2a705", fill_type="solid")
-        red_fill = PatternFill(start_color="#b31810", end_color="#b31810", fill_type="solid")
+        yellow_fill = PatternFill(start_color="FFC300", end_color="FFC300", fill_type="solid")
+        red_fill = PatternFill(start_color="b40a0a", end_color="b40a0a", fill_type="solid")
 
         for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=1, max_col=8):
             username_cell = row[2]
