@@ -187,7 +187,7 @@ async def start(update: Update, context):
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
     await update.message.reply_text(
-        "Привіт!5 Я ваш бот підтримки. Введіть команду /rate для оінки бота, /message для написания адміністраторам бота або /help для отримання інформації про команди.",
+        "Привіт! Я ваш бот підтримки. Введіть команду /rate для оінки бота, /message для написания адміністраторам бота або /help для отримання інформації про команди.",
         reply_markup=reply_markup
     )
 
@@ -335,7 +335,7 @@ async def help(update: Update, context):
         help_text = (
             "Доступні команди в групі:\n"
             "Відповісти на повідомлення бота - Надіслати повідомлення користувачу, який надіслав це повідомлення.\n"
-            "/mute <час> <користувач> [причина] - Замутити користувача на вказаний час.\n"
+            "/mute <час> <користувач> 'причина' - Замутити користувача на вказаний час.\n"
             "/unmute <користувач> - Розмутити користувача.\n"
             "/mutelist - Показати список замучених користувачів.\n"
             "/alllist - Показати всіх користувачів.\n"
@@ -582,80 +582,58 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def mute(update: Update, context: CallbackContext):
     user = update.message.from_user.username
     message_text = update.message.text.split()
+
     if not is_programmer(user) and not is_admin(user):
         await update.message.reply_text("Ця команда доступна тільки адміністраторам.")
         return
 
-    if len(context.args) < 1:
-        await update.message.reply_text("Використовуйте: /mute <час> <користувач> [причина]")
-        return
-
-    mute_time = 0
+    mute_time = 300
+    reason = "По рішенню адміністратора"
     username = None
-    reason = "По рішенню администратора"
 
-    text_position=0
+    # Определяем username
+    if len(context.args) > 0:
+        if context.args[0].isdigit():
+            mute_time = int(context.args[0])
+            username = context.args[1].lstrip('@') if len(context.args) > 1 else None
+        else:
+            username = context.args[0].lstrip('@')
 
-    for i in range(1, len(message_text)):
-        if isinstance(message_text[i], str):
-            if not re.match(r"^@[A-Za-z0-9_]+$", message_text[i]) and not message_text[i].isdigit():
-                text_position = i
-                break
-
-    if len(message_text)==2:
-        username = context.args[0].lstrip('@')
-    elif (len(message_text) == 3) and text_position == 2:
-        username = context.args[0].lstrip('@')
-    elif len(message_text) == 3 and text_position == 1:
-        username = context.args[1].lstrip('@')
-    elif len(message_text) == 4:
-        username = context.args[1].lstrip('@')
-    else:
-        username = context.args[1].lstrip('@')
-
-
-    user = next((u for u in config["users"] if u["username"].lower() == username.lower() or str(u["id"]) == username),
-                None)
-
-    if (len(message_text) == 4):
-        mute_time += int(message_text[1])
-    elif (len(message_text) == 3 and text_position == 1):
-        mute_time += int(message_text[2])
-    elif (len(message_text) == 3 and text_position == 2):
-        mute_time += 0
-    elif (len(message_text) == 2):
-        mute_time += 0
-
+    reason_match = re.search(r'["\'](.*?)["\']', update.message.text)
+    if reason_match:
+        reason = reason_match.group(1)
 
     if not username:
         await update.message.reply_text("Не вказано користувача для мута.")
         return
 
-    if user:
-        if user["id"] == config["owner_id"]:
-            await update.message.reply_text("Неможливо замутити власника чату.")
-            return
+    user = next((u for u in config["users"] if u["username"].lower() == username.lower() or str(u["id"]) == username),
+                None)
 
-        if user["mute"] == True:
-            await update.message.reply_text(f"Користувач {user['first_name']} вже замучений")
-            return
-
-        if mute_time == 0:
-            mute_time = 300
-
-        user["mute"] = True
-        user["mute_end"] = (datetime.now() + timedelta(seconds=mute_time)).strftime("%H:%M; %d/%m/%Y")
-        user["reason"] = reason
-
-        config["muted_users"][username] = True
-        save_data(config)
-
-        mute_permissions = ChatPermissions(can_send_messages=False)
-        await context.bot.restrict_chat_member(chat_id=config["chat_id"], user_id=user["id"], permissions=mute_permissions)
-        await context.bot.send_message(chat_id=user["id"], text=f"Вас замутили на {str(timedelta(seconds=mute_time))}\nПричина: {reason}")
-        await update.message.reply_text(f"Користувач @{user['username']} замучений.")
-    else:
+    if not user:
         await update.message.reply_text(f"Користувач {username} не знайден.")
+        return
+
+    if user["id"] == config["owner_id"]:
+        await update.message.reply_text("Неможливо замутити власника чату.")
+        return
+
+    if user["mute"]:
+        await update.message.reply_text(f"Користувач {user['first_name']} вже був замучений.")
+
+
+    user["mute"] = True
+    user["mute_end"] = (datetime.now() + timedelta(seconds=mute_time)).strftime("%H:%M; %d/%m/%Y")
+    user["reason"] = reason
+
+    config["muted_users"][username] = True
+    save_data(config)
+
+    mute_permissions = ChatPermissions(can_send_messages=False)
+    await context.bot.restrict_chat_member(chat_id=config["chat_id"], user_id=user["id"], permissions=mute_permissions)
+    await context.bot.send_message(chat_id=user["id"],
+                                   text=f"Вас замутили на {str(timedelta(seconds=mute_time))}\nПричина: {reason}")
+    await update.message.reply_text(f"Користувач @{user['username']} замучений.")
 
 async def unmute(update: Update, context: CallbackContext):
     user = update.message.from_user.username
