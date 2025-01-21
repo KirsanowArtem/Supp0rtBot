@@ -187,7 +187,7 @@ async def start(update: Update, context):
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
     await update.message.reply_text(
-        "Привіт!1 Я ваш бот підтримки. Введіть команду /rate для оінки бота, /message для написания адміністраторам бота або /help для отримання інформації про команди.",
+        "Привіт! Я ваш бот підтримки. Введіть команду /rate для оінки бота, /message для написания адміністраторам бота або /help для отримання інформації про команди.",
         reply_markup=reply_markup
     )
 
@@ -930,23 +930,18 @@ def is_admin(username):
 
 async def get_alllist(update: Update, context: CallbackContext) -> None:
     try:
-        # Чтение JSON-данных
         with open(DATA_FILE, "r", encoding="utf-8") as file:
             data = json.load(file)
 
-        # Создание DataFrame для всех пользователей
         all_users_df = pd.DataFrame(data["users"])
 
-        # Разделение пользователей на замученных и нет
         users_df = all_users_df[all_users_df["mute"] == False]
         muted_df = all_users_df[all_users_df["mute"] == True]
 
-        # Форматирование времени окончания мута
         muted_df.loc[:, "mute_end"] = muted_df["mute_end"].apply(
             lambda x: datetime.strptime(x.replace(";", " "), "%H:%M %d/%m/%Y").strftime("%H:%M; %d/%m/%Y") if isinstance(x, str) else ""
         )
 
-        # Создание дополнительных DataFrame из JSON-данных
         admins_df = pd.DataFrame(data.get("admins", []), columns=["Admins"])
         programmers_df = pd.DataFrame(data.get("programmers", []), columns=["Programmers"])
         general_info_df = pd.DataFrame(
@@ -961,7 +956,6 @@ async def get_alllist(update: Update, context: CallbackContext) -> None:
         sent_messages_df = pd.DataFrame(data.get("sent_messages", {}).items(), columns=["MessageID", "UserID"])
         muted_users_df = pd.DataFrame(data.get("muted_users", {}).items(), columns=["UserID", "Details"])
 
-        # Сохранение данных в Excel-файл
         excel_file = "all_users.xlsx"
         with pd.ExcelWriter(excel_file) as writer:
             users_df.to_excel(writer, index=False, sheet_name="Users")
@@ -973,28 +967,23 @@ async def get_alllist(update: Update, context: CallbackContext) -> None:
             sent_messages_df.to_excel(writer, index=False, sheet_name="SentMessages")
             muted_users_df.to_excel(writer, index=False, sheet_name="MutedUsers")
 
-        # Открытие файла для редактирования и окрашивания строк
         workbook = load_workbook(excel_file)
         sheet = workbook["AllUser"]
 
-        # Определение стилей для закрашивания
-        yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")  # Жёлтый для не в муте
-        red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")  # Красный для в муте
+        yellow_fill = PatternFill(start_color="#f2a705", end_color="#f2a705", fill_type="solid")
+        red_fill = PatternFill(start_color="#b31810", end_color="#b31810", fill_type="solid")
 
-        # Перебор строк и закрашивание диапазона A:H
         for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=1, max_col=8):
-            username_cell = row[2]  # Колонка C (индекс 2)
+            username_cell = row[2]
             mute_status = next((user['mute'] for user in data["users"] if user["username"] == username_cell.value), False)
 
             fill_color = red_fill if mute_status else yellow_fill
 
-            for cell in row[:8]:  # Закрашивание диапазона A:H
+            for cell in row[:8]:
                 cell.fill = fill_color
 
-        # Сохранение обновлённого файла
         workbook.save(excel_file)
 
-        # Отправка пользователю
         await update.message.reply_document(document=open(excel_file, "rb"))
 
     except Exception as e:
